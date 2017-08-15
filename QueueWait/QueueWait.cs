@@ -32,13 +32,17 @@ namespace QueueWait
         /// <returns></returns>
         public T pop()
         {
-            // если нету элементов то ждём
-            while (_queue.Count==0){
-                Thread.Sleep(20);
-            }
-            T ret;
-            lock (_locker){
-                ret = _queue.Dequeue();
+            T ret = default(T);
+            var founded = false;
+            while (!founded){
+                lock (_locker){
+                    if (_queue.Count > 0){// блокируем и проверяем на наличие элементов
+                        ret = _queue.Dequeue();// сохраняем элемент
+                        founded = true;// выходим из цикла
+                    }
+                }
+                if (!founded)
+                    Thread.Sleep(20);// если нету элементов то ждём
             }
             return ret;
         }

@@ -18,17 +18,28 @@ namespace QueueWait
             thPush1.Start();
             var thPush2 = new Thread(SetPush2);
             thPush2.Start();
-            var thPop = new Thread(GetPop);
-            thPop.Start();
+            var thPop1 = new Thread(GetPop1);
+            thPop1.Start();
+            var thPop2 = new Thread(GetPop2);
+            thPop2.Start();
             Console.WriteLine("started");
         }
 
-        static private void GetPop()
+        static private void GetPop1()
         {
             while (true)
             {
                 var a = _qw.pop();
-                Console.WriteLine("получено значение "+a.ToString());
+                Console.WriteLine("pop1  "+a.ToString());
+            }
+        }
+
+        static private void GetPop2()
+        {
+            while (true)
+            {
+                var a = _qw.pop();
+                Console.WriteLine("pop2  " + a.ToString());
             }
         }
 
