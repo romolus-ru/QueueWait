@@ -15,12 +15,17 @@ namespace QueueWait
         /// <summary>
         /// Основная блокировка
         /// </summary>
-        private object _locker = new object();
+        private object _lockerQueue = new object();
         
         /// <summary>
         /// Блокировка ожидания хоть одного элемента
         /// </summary>
         private object _lockerWait = new object();
+
+        /// <summary>
+        /// Блокировка для операции получения элемента, что бы ждал только 1 поток, остальные блокировались
+        /// </summary>
+        private object _lockerPopSingle = new object();
 
         private Queue<T> _queue = new Queue<T>();
 
@@ -36,7 +41,7 @@ namespace QueueWait
         public void push(T value)
         {
             lock (_lockerWait){
-                lock (_locker){
+                lock (_lockerQueue){
                     _queue.Enqueue(value);
                 }
                 Monitor.Pulse(_lockerWait);
@@ -50,15 +55,12 @@ namespace QueueWait
         public T pop()
         {
             T ret = default(T);
-            lock (_lockerWait){
-                var found = false;
-                while (!found){
+            lock (_lockerPopSingle){// в один поток (иначе "список пуст")
+                lock (_lockerWait){// с ожиданием 
                     if (_queue.Count == 0) Monitor.Wait(_lockerWait);
-                    // иногда бывает сообщение очередь пуста, поэтому пришлось добавить while и проверку
-                    lock (_locker){
+                    lock (_lockerQueue){// доступ к очереди
                         if (_queue.Count != 0){
                             ret = _queue.Dequeue();
-                            found = true;
                         }
                     }
                 }
