@@ -20,7 +20,7 @@ namespace QueueWait
         /// <summary>
         /// Блокировка ожидания хоть одного элемента
         /// </summary>
-        private object _lockerForEmpty = new object();
+        private object _lockerWait = new object();
 
         private Queue<T> _queue = new Queue<T>();
 
@@ -35,11 +35,11 @@ namespace QueueWait
         /// <param name="value"></param>
         public void push(T value)
         {
-            lock (_lockerForEmpty){
+            lock (_lockerWait){
                 lock (_locker){
                     _queue.Enqueue(value);
                 }
-                Monitor.Pulse(_lockerForEmpty);
+                Monitor.Pulse(_lockerWait);
             }
         }
 
@@ -49,11 +49,19 @@ namespace QueueWait
         /// <returns></returns>
         public T pop()
         {
-            T ret;
-            lock (_lockerForEmpty){
-                Monitor.Wait(_lockerForEmpty);
-                lock (_locker)
-                    ret = _queue.Dequeue();
+            T ret = default(T);
+            lock (_lockerWait){
+                var found = false;
+                while (!found){
+                    if (_queue.Count == 0) Monitor.Wait(_lockerWait);
+                    // иногда бывает сообщение очередь пуста, поэтому пришлось добавить while и проверку
+                    lock (_locker){
+                        if (_queue.Count != 0){
+                            ret = _queue.Dequeue();
+                            found = true;
+                        }
+                    }
+                }
             }
             return ret;
         }

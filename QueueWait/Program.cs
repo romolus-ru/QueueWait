@@ -18,6 +18,10 @@ namespace QueueWait
             thPush1.Start();
             var thPush2 = new Thread(SetPush2);
             thPush2.Start();
+            var thPush3 = new Thread(SetPush3);
+            thPush3.Start();
+            var thPush4 = new Thread(SetPush4);
+            thPush4.Start();
             var thPop1 = new Thread(GetPop1);
             thPop1.Start();
             var thPop2 = new Thread(GetPop2);
@@ -49,7 +53,7 @@ namespace QueueWait
             {
                 Console.WriteLine("push10");
                 _qw.push(10);
-                Thread.Sleep(750);
+                Thread.Sleep(120);
             }
         }
 
@@ -59,7 +63,25 @@ namespace QueueWait
             {
                 Console.WriteLine("push9");
                 _qw.push(9);
-                Thread.Sleep(500);
+                Thread.Sleep(110);
+            }
+        }
+        static private void SetPush3()
+        {
+            while (true)
+            {
+                Console.WriteLine("push3");
+                _qw.push(3);
+                Thread.Sleep(150);
+            }
+        }
+        static private void SetPush4()
+        {
+            while (true)
+            {
+                Console.WriteLine("push4");
+                _qw.push(4);
+                Thread.Sleep(150);
             }
         }
 
