@@ -12,8 +12,22 @@ namespace QueueWait
     /// </summary>
     public class QueueWait<T>
     {
+        /// <summary>
+        /// Основная блокировка
+        /// </summary>
         private object _locker = new object();
+        
+        /// <summary>
+        /// Блокировка ожидания хоть одного элемента
+        /// </summary>
+        private object _lockerForEmpty = new object();
+
         private Queue<T> _queue = new Queue<T>();
+
+        public QueueWait()
+        {
+            //Monitor.Enter(_lockerForEmpty);
+        }
 
         /// <summary>
         /// push
@@ -21,8 +35,11 @@ namespace QueueWait
         /// <param name="value"></param>
         public void push(T value)
         {
-            lock (_locker){
-                _queue.Enqueue(value);
+            lock (_lockerForEmpty){
+                lock (_locker){
+                    _queue.Enqueue(value);
+                }
+                Monitor.Pulse(_lockerForEmpty);
             }
         }
 
@@ -32,17 +49,11 @@ namespace QueueWait
         /// <returns></returns>
         public T pop()
         {
-            T ret = default(T);
-            var founded = false;
-            while (!founded){
-                lock (_locker){
-                    if (_queue.Count > 0){// блокируем и проверяем на наличие элементов
-                        ret = _queue.Dequeue();// сохраняем элемент
-                        founded = true;// выходим из цикла
-                    }
-                }
-                if (!founded)
-                    Thread.Sleep(20);// если нету элементов то ждём
+            T ret;
+            lock (_lockerForEmpty){
+                Monitor.Wait(_lockerForEmpty);
+                lock (_locker)
+                    ret = _queue.Dequeue();
             }
             return ret;
         }
